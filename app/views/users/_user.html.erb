@@ -1,0 +1,21 @@
+<table>
+  <thead>
+    <tr>
+    	<th width="200">Foto</th>
+      	<th width="200">id</th>
+      	<th width="200">Nombre</th>
+      	<th>Red social</th>
+    </tr>
+  </thead>
+  <tbody>
+  	<% User.all.each do |user| %>
+		<tr>
+			<td><figure><img src="<%= user.picture %>"></figure></td>
+			<td><%= user.uid %></td>
+			<td><%= user.name %></td>
+			<td><%= user.provider %></td>
+      <td><%= link_to 'Destroy', user_path(user), method: :delete, data: { confirm: 'Are you sure?' } %></td>
+		</tr>
+	<% end %>
+  </tbody>
+</table>

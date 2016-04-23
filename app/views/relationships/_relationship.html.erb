@@ -1,0 +1,18 @@
+<table>
+  <thead>
+    <tr>
+      <th width="200">id_amigo</th>
+      <th width="200">Amigo</th>
+      <th>Interacciones</th>
+    </tr>
+  </thead>
+  <tbody>
+  	<% current_user.relationships.order(level: :desc).each do |relationship| %>
+		<tr>
+      <td><%= relationship.fid %></td>
+			<td><%= current_user.friends.where(fid: relationship.fid).first.name %></td>
+			<td><%= relationship.level %></td>
+		</tr>
+	<% end %>
+  </tbody>
+</table>

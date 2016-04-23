@@ -1,0 +1,20 @@
+<table>
+  <thead>
+    <tr>
+    	<th width="50">id</th>
+      	<th width="200">id_twitter</th>
+      	<th width="300">Nombre</th>
+      	<th>Ubicación</th>
+    </tr>
+  </thead>
+  <tbody>
+  	<% current_user.friends.each do |friend| %>
+		<tr>
+			<td><%= friend.id %></td>
+			<td><%= friend.fid %></td>
+			<td><%= friend.name %></td>
+			<td><%= friend.location %></td>
+		</tr>
+	<% end %>
+  </tbody>
+</table>

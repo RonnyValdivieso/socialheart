@@ -1,0 +1,65 @@
+<% if current_user %>
+	<% @title = 'Social Heart - Home' %>
+	<header>
+		<div class="top-bar">
+			<div class="top-bar-left">
+			    <ul class="dropdown menu" data-dropdown-menu>
+			    	<li class="menu-text">Social Heart</li>
+			    </ul>
+			</div>
+			<div class="top-bar-right">
+			    <ul class="menu">
+			    	<li><img src="<%= current_user.picture %>"></li>
+			    	<li><%= link_to current_user.name, root_path %></li>
+					<li><%= link_to "Sign out", "/sign_out", method: :delete, class: "button" %></li>
+			    </ul>
+		  </div>
+		</div>
+	</header>
+	<ul class="tabs" data-tabs id="example-tabs">
+		<li class="tabs-title is-active"><a href="#panel1" aria-selected="true">Amigos</a></li>
+		<% unless current_user.provider == 'facebook' %>
+			<li class="tabs-title"><a href="#panel2">Seguidores</a></li>
+		<% end %>
+		<li class="tabs-title"><a href="#panel4">Interacciones</a></li>
+		<li class="tabs-title"><a href="#panel5">Me mencionó</a></li>
+		<li class="tabs-title"><a href="#panel6">Mencioné</a></li>
+		<li class="tabs-title"><a href="#panel7">Retweets</a></li>
+	</ul>
+	<div class="tabs-content" data-tabs-content="example-tabs">
+		<div class="tabs-panel is-active" id="panel1">
+			<%= render 'friends/friend' %>
+		</div>
+		<% unless current_user.provider == 'facebook' %>
+			<div class="tabs-panel" id="panel2">
+				<%= render 'followers/follower' %>
+			</div>
+		<% end %>
+		<div class="tabs-panel" id="panel4">
+			<%= render 'relationships/relationship' %>
+		</div>
+		<div class="tabs-panel" id="panel5">
+			<%= render 'activities/mentioned' %>
+		</div>
+		<div class="tabs-panel" id="panel6">
+			<%= render 'activities/mention' %>
+		</div>
+		<div class="tabs-panel" id="panel7">
+			<%= render 'activities/retweet' %>
+		</div>
+	</div>
+
+<% else %>
+	<div class="row">
+		<div class="medium-6 medium-centered large-4 large-centered columns">
+			<form>
+				<div class="row column log-in-form">
+					<h4 class="text-center">Social Heart</h4>
+					<p class="text-center"><%= link_to "Sign in with Facebook", "/auth/facebook", class: "expanded button fb" %></p>
+					<p class="text-center"><%= link_to "Sign in with Twitter", "/auth/twitter", class: "expanded button" %></p>
+      			</div>
+      		</form>
+      	</div>
+	</div>
+	<%= render 'users/user' %>
+<% end %>	
