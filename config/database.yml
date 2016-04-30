@@ -6,17 +6,17 @@
 #
 default: &default
   adapter: postgresql
-  #host: localhost
+  host: localhost
   pool: 5
   timeout: 5000
-  #username: postgres
-  #password:
+  username: postgres
+  password:
 
 development:
   <<: *default
-  host: localhost
-  username: postgres
-  password:
+  #host: localhost
+  #username: postgres
+  #password:
   database: socialheart_dev
 
 # Warning: The database defined as "test" will be erased and

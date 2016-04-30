@@ -16,38 +16,12 @@
 		  </div>
 		</div>
 	</header>
-	<ul class="tabs" data-tabs id="example-tabs">
-		<li class="tabs-title is-active"><a href="#panel1" aria-selected="true">Amigos</a></li>
-		<% unless current_user.provider == 'facebook' %>
-			<li class="tabs-title"><a href="#panel2">Seguidores</a></li>
-		<% end %>
-		<li class="tabs-title"><a href="#panel4">Interacciones</a></li>
-		<li class="tabs-title"><a href="#panel5">Me mencionó</a></li>
-		<li class="tabs-title"><a href="#panel6">Mencioné</a></li>
-		<li class="tabs-title"><a href="#panel7">Retweets</a></li>
-	</ul>
-	<div class="tabs-content" data-tabs-content="example-tabs">
-		<div class="tabs-panel is-active" id="panel1">
-			<%= render 'friends/friend' %>
-		</div>
-		<% unless current_user.provider == 'facebook' %>
-			<div class="tabs-panel" id="panel2">
-				<%= render 'followers/follower' %>
-			</div>
-		<% end %>
-		<div class="tabs-panel" id="panel4">
-			<%= render 'relationships/relationship' %>
-		</div>
-		<div class="tabs-panel" id="panel5">
-			<%= render 'activities/mentioned' %>
-		</div>
-		<div class="tabs-panel" id="panel6">
-			<%= render 'activities/mention' %>
-		</div>
-		<div class="tabs-panel" id="panel7">
-			<%= render 'activities/retweet' %>
-		</div>
-	</div>
+
+	<% if current_user.provider == 'facebook' %>
+		<%= render 'home/facebook' %>
+	<% else %>
+		<%= render 'home/twitter' %>
+	<% end %>
 
 <% else %>
 	<div class="row">
@@ -61,5 +35,5 @@
       		</form>
       	</div>
 	</div>
-	<%= render 'users/user' %>
+	
 <% end %>	
