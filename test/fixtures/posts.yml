@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  pid: MyString
+  friend: MyString
+  post_type: MyString
+  text: MyText
+  created_at: 2016-05-04 10:20:18
+
+two:
+  pid: MyString
+  friend: MyString
+  post_type: MyString
+  text: MyText
+  created_at: 2016-05-04 10:20:18

@@ -3,7 +3,7 @@ class User < ActiveRecord::Base
 	has_many :activities, dependent: :destroy
 	has_many :friends, dependent: :destroy
 	has_many :followers, dependent: :destroy
-	has_many :tweets, dependent: :destroy
+	has_many :posts, dependent: :destroy
 	has_many :relationships, dependent: :destroy
 
 	def self.sign_in_from_omniauth(auth)
@@ -47,10 +47,11 @@ class User < ActiveRecord::Base
 
 		begin
 
-			posts = client.get_connections('me', 'posts', { fields: ['id', 'message', 'message_tags',
-																	'from', 'type', 'link', 'created_time'] })
+			posts = client.get_connections('me', 'posts', { fields: ['id', 'message', 'message_tags', 'story_tags',
+																	'type', 'link', 'created_time'] })
 			friends = client.get_connections('me', 'friends')
-			#mentions = client.get_connections('me', 'tagged')
+			mentions = client.get_connections('me', 'tagged', { fields: ['id', 'message', 'created_time',
+																		'from']})
 		rescue
 			
 			p "There was an error while trying to authenticate you..."
@@ -58,20 +59,31 @@ class User < ActiveRecord::Base
 		end
 
 		friends.each do |friend|
-			Friend.set_fb_friend(user, friend)
+			Friend.set_friend(user, friend)
 		end
 
 		posts.each do |post|
 			if post['message_tags']
 				tags = post['message_tags']
 				tags.each do |tag|
-					friend = Friend.where(fid: tag[1][0]['id'])
-					Activity.set_fb_activity(user, post, friend.first) if friend.size > 0
+					fb_friend(client, user, tag[1][0]['id'], post, "Mention")
 				end
 			end
+=begin
+			if post['story_tags']
+				tags = post['story_tags']
+				tags.each do |tag|
+					fb_friend(client, user, tag[1][0]['id'], post, "Mention") if tag[1][0]['id'] != user.uid
+				end
+			end
+=end
 		end
-		
-		relationship(user)
+
+		mentions.each do |mention|
+			fb_friend(client, user, mention['from']['id'], mention, "Mentioned")
+		end
+
+		activity_relationship(user)
 	end
 
 	def self.tw_data(user)
@@ -80,24 +92,24 @@ class User < ActiveRecord::Base
 
 		begin
 
-			tweets = client.user_timeline(count: 150, include_rts: false) # Trae los últimos 150 tweets del usuario
-			mentions = client.mentions_timeline
-			my_retweets = client.retweeted_by_me
+			tweets = client.user_timeline(count: 150, include_rts: false)	# Trae los últimos 150 tweets del usuario, excepto retweets
+			mentions = client.mentions_timeline(count: 150)					# Trae las últimas 150 menciones por parte del usuario
+			my_retweets = client.retweeted_by_me(count: 150)				# Trae los últimos 150 retweets del usuario
 			retweets_of_me = client.retweets_of_me
 			
-			if user.first_time
-				followers = fetch_all_followers(user, client) # Trae todos los seguidores del usuario
-				friends = fetch_all_friends(user, client) # Trae todas las cuentas que sigue el usuario
+			if user.first_time		# Si el usuario inicia sesión por primera vez
+				followers = fetch_all_followers(user, client)	# Trae --> seguidores del usuario
+				friends = fetch_all_friends(user, client)		# Trae --> a quienes sigue el usuario
 			else
-				followers = client.followers
-				friends = client.friends
+				followers = client.followers					# Trae --> seguidores del usuario (últimos 20)
+				friends = client.friends						# Trae --> a quienes sigue el usuario (últimos 20)
 
 				followers.each do |f|
-					Follower.set_follower(user, f)
+					Follower.set_follower(user, f)				# Guarda --> seguidores en la base de datos
 				end
 
 				friends.each do |f|
-					Friend.set_tw_friend(user, f)
+					Friend.set_friend(user, f)					# Guarda --> a quienes sigue el usuario
 				end
 			end
 		
@@ -113,54 +125,55 @@ class User < ActiveRecord::Base
 		#end
 
 		my_retweets.each do |retweet|
-			fid = retweet.user_mentions.first.id
-			Tweet.set_tweet(user, retweet, fid, "Retweet")
+			if retweet.user_mentions.size > 0
+				fid = retweet.user_mentions.first.id
+				Post.set_post(user, retweet, fid, "Retweet")		# Guarda --> retweets que ha hecho el usuario
+			end
 		end
 
 		mentions.each do |mention|
 			fid = mention.user.id
-			Tweet.set_tweet(user, mention, fid, "Mentioned")
+			Post.set_post(user, mention, fid, "Mentioned")		# Guarda --> tweets en los que ha sido mencionado el usuario
 		end
 
 		tweets.each do |tweet|
 			if tweet.user_mentions
 				mentions = tweet.user_mentions
 				mentions.each do |mention|
-					Tweet.set_tweet(user, tweet, mention.id.to_s)
+					Post.set_post(user, tweet, mention.id.to_s, "Mention")	# Guarda --> menciones que ha hecho el usuario
 				end
 			end
 	    end
 
-	    user.friends.each do |friend|
-	    	if (amount = user.tweets.where(tweet_type: "Mention", friend: friend.fid).size) > 0
-	    		Activity.set_tw_activity(user, friend.fid, amount, "Mention")
-	    	end
+	    activity_relationship(user)
 
-	    	if (amount = user.tweets.where(tweet_type: "Mentioned", friend: friend.fid).size) > 0	    		
-	    		Activity.set_tw_activity(user, friend.fid, amount, "Mentioned")
-	    	end
-	    	
-	    	if (amount = user.tweets.where(tweet_type: "Retweet", friend: friend.fid).size) > 0
-	    		Activity.set_tw_activity(user, friend.fid, amount, "Retweet")
-	    	end
-	    end
-
-		relationship(user)
-		user.update(first_time: false)
 	end
 
-	def self.relationship(user)
+	def self.activity_relationship(user)
 		user.friends.each do |friend|
-			amount = user.tweets.where(friend: friend.fid).size
-=begin
-			if a.size >= b.size
-				rate = Activity.rate(a.size, b.size)
-			else
-				rate = Activity.rate(b.size, a.size)
-			end
-=end
-			Relationship.set_relationship(amount, user, friend) if amount > 0
-		end
+	    	if (amount = user.posts.where(post_type: "Mention", friend: friend.fid).size) > 0
+	    		Activity.set_activity(user, friend.fid, amount, "Mention")		# Guarda --> Registro de menciones que ha hecho el usuario (por usuario)
+	    	end
+
+	    	if (amount = user.posts.where(post_type: "Mentioned", friend: friend.fid).size) > 0	    		
+	    		Activity.set_activity(user, friend.fid, amount, "Mentioned")	# Guarda --> Registro de menciones que en la que aparece el usuario (por usuario)
+	    	end
+	    	
+	    	if (amount = user.posts.where(post_type: "Retweet", friend: friend.fid).size) > 0
+	    		Activity.set_activity(user, friend.fid, amount, "Retweet")		# Guarda --> Registro de retweets que ha hecho el usuario (por usuario)
+	    	end
+
+	    	amount = user.posts.where(friend: friend.fid).size
+			Relationship.set_relationship(amount, user, friend) if amount > 0	# Guarda --> Cantidad de actividades del usuario (por usuario)
+	    end
+	end
+
+	def self.fb_friend(client, user, friend_id, post, type)
+		new_friend = client.get_object(friend_id)
+		Friend.set_friend(user, new_friend)
+
+		friend = Friend.where(fid: friend_id)
+		Post.set_post(user, post, friend[0].fid, type) if friend
 	end
 
 	SLICE_SIZE = 100
@@ -168,7 +181,7 @@ class User < ActiveRecord::Base
 	def self.fetch_all_friends(user, client)
 		client.friend_ids(user.screen_name).each_slice(SLICE_SIZE).with_index do |slice, i|
 			client.users(slice).each_with_index do |f, j|
-				Friend.set_tw_friend(user, f)
+				Friend.set_friend(user, f)
 		  	end
 		end
 	end
@@ -181,6 +194,8 @@ class User < ActiveRecord::Base
 		end
 	end
 
+
+	# Actualización de datos del usuario
 	def self.update_data
 		users = User.all
 
