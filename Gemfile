@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby '2.2.1'
+#ruby '2.2.1'
 
 gem 'omniauth-facebook'
 gem 'omniauth-twitter'
@@ -8,6 +8,8 @@ gem 'koala'
 gem 'twitter'
 
 gem 'foundation-rails'
+
+gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw]
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.2.4'
@@ -36,7 +38,7 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 # gem 'bcrypt', '~> 3.1.7'
 
 # Use Unicorn as the app server
-gem 'unicorn'#, '~> 4.8.3'
+#gem 'unicorn'#, '~> 4.8.3'
 
 # Use Capistrano for deployment
 gem 'capistrano-rails', group: :development
