@@ -1,7 +1,7 @@
 lock '3.4.1'
 
 set :application, 'socialheart'
-set :repo_url, 'http://github.com/RonnyValdivieso/socialheart.git'
+set :repo_url, 'https://github.com/gartec/socialheart-datamining.git'
 set :deploy_to, '/opt/www/socialheart'
 set :user, 'deploy'
 set :linked_dirs, %w{log tmp/pids tmp/cache tmp/sockets}
